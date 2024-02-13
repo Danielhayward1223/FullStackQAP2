@@ -1,38 +1,60 @@
 const http = require("http");
 const fs = require("fs");
+const path = require("path");
 global.DEBUG = true;
+
+const EventEmitter = require("events");
+class RouteEmitter extends EventEmitter {}
+const routeEmitter = new EventEmitter();
+const routes = require("./routes.js");
+
+routeEmitter.on("route", (url) => {
+  const d = new Date();
+
+  if (DEBUG) console.log(`Route event triggered: ${url} at ${d}`);
+  if (!fs.existsSync(path.join(__dirname, "logs"))) {
+    fs.mkdirSync(path.join(__dirname, "logs"));
+  }
+  fs.appendFile(
+    path.join(__dirname, "logs", "routes.log"),
+    `Route event triggered: ${url} at ${d}\n`,
+    (error) => {
+      if (error) throw error;
+    }
+  );
+});
 
 const server = http.createServer((request, response) => {
   if (DEBUG) console.log("URL requested: " + request.url);
+  let path = "./pages/";
   switch (request.url) {
     case "/":
-      if (DEBUG) console.log("Base Page");
-      response.writeHead(200, { "Content-Type": "text/html" });
-      response.end("<h1>Welcome to the base page!</h1>");
+      path += "base.html";
+      routeEmitter.emit("route", path);
+      routes.basePage(path, response);
       break;
-
     case "/about":
-      if (DEBUG) console.log("About Page");
-      response.writeHead(200, { "Content-Type": "text/html" });
-      response.end("<h1>Welcome to the about page!</h1>");
+      path += "about.html";
+      routeEmitter.emit("route", path);
+      routes.aboutPage(path, response);
       break;
 
     case "/contact":
-      if (DEBUG) console.log("Contact Page");
-      response.writeHead(200, { "Content-Type": "text/html" });
-      response.end("<h1>Welcome to the contact page!</h1>");
+      path += "contact.html";
+      routeEmitter.emit("route", path);
+      routes.contactPage(path, response);
       break;
 
     case "/products":
-      if (DEBUG) console.log("products Page");
-      response.writeHead(200, { "Content-Type": "text/html" });
-      response.end("<h1>Welcome to the products page!</h1>");
+      path += "products.html";
+      routeEmitter.emit("route", path);
+      routes.productsPage(path, response);
       break;
 
     case "/subscribe":
-      if (DEBUG) console.log("Subscribe Page");
-      response.writeHead(200, { "Content-Type": "text/html" });
-      response.end("<h1>Welcome to the subscribe page!</h1>");
+      path += "subscribe.html";
+      routeEmitter.emit("route", path);
+      routes.subscribePage(path, response);
       break;
   }
 });
